@@ -1,0 +1,91 @@
+<!-- templates/dashboard/admin_dashboard.html -->
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-3">Admin Dashboard</h2>
+
+    <!-- أزرار الإدارة -->
+    <div class="mb-4">
+        <a href="{% url 'category_list' %}" class="btn btn-info me-2">Manage Categories</a>
+        <a href="{% url 'product_list' %}" class="btn btn-primary me-2">Manage Products</a>
+        <a href="{% url 'user_list' %}" class="btn btn-success me-2">Manage Users</a>
+        <a href="{% url 'order_list' %}" class="btn btn-warning">Manage Orders</a>
+    </div>
+
+    <!-- الإحصائيات -->
+    <div class="row text-center mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card bg-primary text-white shadow-sm">
+                <div class="card-body">
+                    <h5>Total Products</h5>
+                    <h3>{{ total_products }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card bg-success text-white shadow-sm">
+                <div class="card-body">
+                    <h5>Total Users</h5>
+                    <h3>{{ total_users }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card bg-warning text-white shadow-sm">
+                <div class="card-body">
+                    <h5>Total Orders</h5>
+                    <h3>{{ total_orders }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نموذج إضافة Category مباشرة -->
+    <div class="mb-5">
+        <h4>Add New Category</h4>
+        <form method="POST" action="{% url 'category_list' %}" class="row g-3">
+            {% csrf_token %}
+            <div class="col-md-6">
+                <input type="text" name="name" class="form-control" placeholder="Category Name" required>
+            </div>
+            <div class="col-md-6">
+                <button type="submit" class="btn btn-info">Add Category</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- آخر الطلبات -->
+    <h4 class="mb-3">Latest Orders</h4>
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Total Price</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in latest_orders %}
+                <tr>
+                    <td>{{ order.order_id }}</td>
+                    <td>{{ order.user.first_name }} {{ order.user.last_name }}</td>
+                    <td>{{ order.total_price }}</td>
+                    <td>{{ order.status }}</td>
+                    <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center">No orders found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

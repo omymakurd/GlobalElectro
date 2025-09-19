@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Home - Global Electro{% endblock %}
+
+{% block content %}
+<div class="hero-section position-relative">
+  <video autoplay muted loop playsinline class="hero-video">
+    <source src="{% static 'videos/home.mp4' %}" type="video/mp4">
+  </video>
+  <div class="hero-text">
+  <h1>
+    High Quality Used <br>
+    <span>Electrical Appliances</span><br>
+    Germany, Gulf countries <br>
+    to Egypt & MENA
+  </h1>
+  <p class="mt-3">
+    Reliable German and imported appliances made affordable.
+    Each item <br>is carefully  inspected to guarantee quality before
+    it reaches your home in Egypt.
+  </p>
+  <div class="mt-4">
+    <a href="/products/" class="btn btn-warning me-2">Shop Now</a>
+    <a href="/about/" class="btn btn-outline-light">Learn More</a>
+  </div>
+</div>
+
+</div>
+{% endblock %}

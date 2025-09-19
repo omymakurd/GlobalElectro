@@ -1,0 +1,22 @@
+
+    body {
+      background: linear-gradient(to right, #001f3f, #003366);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .auth-box {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 2rem;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+      width: 100%;
+      max-width: 400px;
+    }
+    .auth-box h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-weight: bold;
+      color: #001f3f;
+    }

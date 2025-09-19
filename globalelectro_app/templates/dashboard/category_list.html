@@ -1,0 +1,41 @@
+<!-- templates/dashboard/category_list.html -->
+{% extends "base.html" %}
+
+{% block title %}Categories{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Categories</h2>
+
+    <!-- نموذج إضافة كاتيجوري جديد -->
+    <form method="POST" class="mb-4">
+        {% csrf_token %}
+        <div class="input-group">
+            <input type="text" name="name" class="form-control" placeholder="New category name" required>
+            <button class="btn btn-primary" type="submit">Add Category</button>
+        </div>
+    </form>
+
+    <!-- قائمة الكاتيجوريات -->
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for category in categories %}
+            <tr>
+                <td>{{ category.id }}</td>
+                <td>{{ category.name }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="2" class="text-center">No categories found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
