@@ -1,5 +1,5 @@
-<!-- templates/dashboard/category_list.html -->
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Categories{% endblock %}
 
@@ -8,7 +8,7 @@
     <h2 class="mb-4">Categories</h2>
 
     <!-- نموذج إضافة كاتيجوري جديد -->
-    <form method="POST" class="mb-4">
+    <form id="category-form" class="mb-4">
         {% csrf_token %}
         <div class="input-group">
             <input type="text" name="name" class="form-control" placeholder="New category name" required>
@@ -16,7 +16,7 @@
         </div>
     </form>
 
-    <!-- قائمة الكاتيجوريات -->
+    <!-- جدول الكاتيجوريات -->
     <table class="table table-bordered table-striped">
         <thead class="table-dark">
             <tr>
@@ -24,10 +24,10 @@
                 <th>Name</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="category-table-body">
             {% for category in categories %}
             <tr>
-                <td>{{ category.id }}</td>
+                <td>{{ category.category_id }}</td>
                 <td>{{ category.name }}</td>
             </tr>
             {% empty %}
@@ -38,4 +38,6 @@
         </tbody>
     </table>
 </div>
+
+<script src="{% static 'js/category_ajax.js' %}"></script>
 {% endblock %}

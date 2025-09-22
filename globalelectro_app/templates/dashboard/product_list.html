@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Products{% endblock %}
 
@@ -7,7 +8,7 @@
     <h2 class="mb-4">Products</h2>
 
     <!-- إضافة منتج جديد -->
-    <form method="POST" enctype="multipart/form-data" class="mb-4">
+    <form id="productForm" method="POST" enctype="multipart/form-data" class="mb-4">
         {% csrf_token %}
         <div class="row g-2">
             <div class="col-md-3">
@@ -82,4 +83,7 @@
         </tbody>
     </table>
 </div>
+
+<!-- ربط ملف الجافاسكربت -->
+<script src="{% static 'js/products_ajax.js' %}"></script>
 {% endblock %}

@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.hashers import make_password, check_password
 from functools import wraps
 from .models import *  
+from django.http import JsonResponse
 
 
 # ===== ديكوريتور للتحقق من الدور =====
@@ -110,17 +111,20 @@ def admin_dashboard(request):
 @admin_required
 def category_list(request):
     if request.method == 'POST':
-        name = request.POST.get('name')
+        name = request.POST.get('name', '').strip()
         if name:
-            Category.objects.create(name=name)
-            messages.success(request, f"Category '{name}' added successfully.")
-            return redirect('category_list')
+            category = Category.objects.create(name=name)
+            return JsonResponse({"status": "success", "category_id": category.category_id, "name": category.name})
+        return JsonResponse({"status": "error", "message": "Name is required"})
 
     categories = Category.objects.all()
     return render(request, 'dashboard/category_list.html', {'categories': categories})
 
+
+@admin_required
 def product_list(request):
-    if request.method == 'POST':
+    if request.method == 'POST' and request.headers.get("x-requested-with") == "XMLHttpRequest":
+        # AJAX request
         name = request.POST.get('name')
         description = request.POST.get('description')
         price = request.POST.get('price')
@@ -128,24 +132,40 @@ def product_list(request):
         stock_quantity = request.POST.get('stock_quantity')
         image = request.FILES.get('image')
         category_id = request.POST.get('category')
-        
+
         if all([name, description, price, condition, stock_quantity, image, category_id]):
-            category = Category.objects.get(category_id=category_id)
-            Product.objects.create(
+            category = Category.objects.get(pk=category_id)
+            product = Product.objects.create(
                 name=name,
                 description=description,
                 price=price,
                 condition=condition,
                 stock_quantity=stock_quantity,
-                image=image,  # الحقل لازم يكون ImageField في الموديل
+                image=image,
                 category=category
             )
-            messages.success(request, f"Product '{name}' added successfully.")
-            return redirect('product_list')
+            return JsonResponse({
+                "status": "success",
+                "id": product.product_id,
+                "name": product.name,
+                "description": product.description,
+                "price": product.price,
+                "condition": product.condition,
+                "stock": product.stock_quantity,
+                "image_url": product.image.url if product.image else "",
+                "category": product.category.name,
+            })
 
+        return JsonResponse({"status": "error", "message": "Missing fields"})
+
+    # لو GET عادي
     products = Product.objects.all()
     categories = Category.objects.all()
-    return render(request, 'dashboard/product_list.html', {'products': products, 'categories': categories})
+    return render(request, "dashboard/product_list.html", {
+    "products": products,
+    "categories": categories,
+})
+
 @admin_required
 def order_list(request):
     orders = CustomerOrder.objects.all().order_by('-created_at')

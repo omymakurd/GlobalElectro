@@ -110,7 +110,7 @@ class Cartitem(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed = False
+       
         db_table = 'cartitem'
 
 class CustomerOrder(models.Model):
@@ -122,7 +122,7 @@ class CustomerOrder(models.Model):
     user = models.ForeignKey(Users, related_name='orders', on_delete=models.CASCADE)
 
     class Meta:
-        managed = False
+       
         db_table = 'customer_order'
 
 class OrderItem(models.Model):
@@ -135,5 +135,5 @@ class OrderItem(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed = False
+        
         db_table = 'order_item'
