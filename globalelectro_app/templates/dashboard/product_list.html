@@ -8,26 +8,28 @@
     <h2 class="mb-4">Products</h2>
 
     <!-- إضافة منتج جديد -->
-    <form id="productForm" method="POST" enctype="multipart/form-data" class="mb-4">
+    <form id="product-form" enctype="multipart/form-data" class="mb-4">
         {% csrf_token %}
+        <input type="hidden" id="product_id" name="product_id" value="">
+
         <div class="row g-2">
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <input type="text" name="name" class="form-control" placeholder="Product name" required>
             </div>
             <div class="col-md-2">
                 <input type="text" name="description" class="form-control" placeholder="Description" required>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-1">
                 <input type="number" step="0.01" name="price" class="form-control" placeholder="Price" required>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-1">
                 <input type="text" name="condition" class="form-control" placeholder="Condition" required>
             </div>
             <div class="col-md-1">
                 <input type="number" name="stock_quantity" class="form-control" placeholder="Stock" required>
             </div>
             <div class="col-md-2">
-                <input type="file" name="image" class="form-control" required>
+                <input type="file" name="image" class="form-control">
             </div>
             <div class="col-md-2">
                 <select name="category" class="form-control" required>
@@ -37,14 +39,14 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="col-md-2 mt-2">
-                <button class="btn btn-primary w-100" type="submit">Add Product</button>
+            <div class="col-md-1 mt-2">
+                <button class="btn btn-primary w-100" type="submit">Add</button>
             </div>
         </div>
     </form>
 
     <!-- جدول المنتجات -->
-    <table class="table table-bordered table-striped mt-3">
+    <table class="table table-bordered table-striped">
         <thead class="table-dark">
             <tr>
                 <th>ID</th>
@@ -55,35 +57,58 @@
                 <th>Stock</th>
                 <th>Image</th>
                 <th>Category</th>
+                <th style="width: 250px;">Actions</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="product-table-body">
             {% for product in products %}
-            <tr>
+            <tr data-id="{{ product.product_id }}">
                 <td>{{ product.product_id }}</td>
-                <td>{{ product.name }}</td>
-                <td>{{ product.description }}</td>
-                <td>{{ product.price }}</td>
-                <td>{{ product.condition }}</td>
-                <td>{{ product.stock_quantity }}</td>
+                <td class="product-name">{{ product.name }}</td>
+                <td class="product-desc">{{ product.description }}</td>
+                <td class="product-price">{{ product.price }}</td>
+                <td class="product-cond">{{ product.condition }}</td>
+                <td class="product-stock">{{ product.stock_quantity }}</td>
                 <td>
                     {% if product.image %}
                     <img src="{{ product.image.url }}" alt="{{ product.name }}" width="50">
-                    {% else %}
-                    No Image
-                    {% endif %}
+                    {% else %}No Image{% endif %}
                 </td>
-                <td>{{ product.category.name }}</td>
+                <td class="product-category" data-category-id="{{ product.category.category_id }}">
+                    {{ product.category.name }}
+                </td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-warning edit-btn">
+                            <i class="bi bi-pencil-square"></i> Edit
+                        </button>
+                        <button class="btn btn-sm btn-success save-btn d-none">
+                            <i class="bi bi-check2-square"></i> Save
+                        </button>
+                        <button class="btn btn-sm btn-secondary cancel-btn d-none">
+                            <i class="bi bi-x-square"></i> Cancel
+                        </button>
+                        <button class="btn btn-sm btn-danger delete-btn">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </div>
+                </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="8" class="text-center">No products found.</td>
+                <td colspan="9" class="text-center">No products found.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
-
-<!-- ربط ملف الجافاسكربت -->
+<script id="categories-data" type="application/json">
+    [
+        {% for cat in categories %}
+            {"category_id": "{{ cat.category_id }}", "name": "{{ cat.name }}"}{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ]
+</script>
+<!-- تحميل سكربت AJAX -->
 <script src="{% static 'js/products_ajax.js' %}"></script>
 {% endblock %}

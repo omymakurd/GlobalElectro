@@ -61,7 +61,7 @@ class Category(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'category'
 
 class Product(models.Model):
