@@ -7,13 +7,18 @@ document.addEventListener("DOMContentLoaded", function () {
     const categoriesData = JSON.parse(document.getElementById("categories-data").textContent);
 
     // ========== Add / Update ==========
-
     form.addEventListener("submit", function (e) {
         e.preventDefault();
 
         const formData = new FormData(form);
-        console.log("Form Data:", [...formData.entries()]); // 👈
         const productId = form.querySelector("#product_id").value;
+
+        // 👇 إضافة قيمة is_featured
+
+        const featuredInput = form.querySelector("#is_featured");
+        if (featuredInput) {
+            formData.append("is_featured", featuredInput.checked ? "true" : "false");
+        }
         const url = productId ? `/products/${productId}/edit/` : "/products/";
 
         fetch(url, {
@@ -23,8 +28,6 @@ document.addEventListener("DOMContentLoaded", function () {
         })
             .then(res => res.json())
             .then(data => {
-                console.log("Response from server (ADD/EDIT):", data);
-
                 if (data.status === "success") {
                     Swal.fire({
                         icon: "success",
@@ -38,21 +41,22 @@ document.addEventListener("DOMContentLoaded", function () {
                         row.setAttribute("data-id", data.product_id);
                         row.setAttribute("data-category-id", data.category_id);
                         row.innerHTML = `
-                        <td>${data.product_id}</td>
-                        <td class="product-name">${data.name}</td>
-                        <td class="product-desc">${data.description}</td>
-                        <td class="product-price">${data.price}</td>
-                        <td class="product-cond">${data.condition}</td>
-                        <td class="product-stock">${data.stock_quantity}</td>
-                        <td>${data.image ? `<img src="${data.image}" width="50">` : "No Image"}</td>
-                        <td class="product-category" data-category-id="${data.category_id}">${data.category_name}</td>
-                        <td>
-                            <div class="btn-group">
-                                <button class="btn btn-sm btn-warning edit-btn">Edit</button>
-                                <button class="btn btn-sm btn-danger delete-btn">Delete</button>
-                            </div>
-                        </td>
-                    `;
+                            <td>${data.product_id}</td>
+                            <td class="product-name">${data.name}</td>
+                            <td class="product-desc">${data.description}</td>
+                            <td class="product-price">${data.price}</td>
+                            <td class="product-cond">${data.condition}</td>
+                            <td class="product-stock">${data.stock_quantity}</td>
+                            <td>${data.image ? `<img src="${data.image}" width="50">` : "No Image"}</td>
+                            <td class="product-category" data-category-id="${data.category_id}">${data.category_name}</td>
+                            <td class="product-featured">${data.is_featured ? "✅" : "❌"}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-warning edit-btn">Edit</button>
+                                    <button class="btn btn-sm btn-danger delete-btn">Delete</button>
+                                </div>
+                            </td>
+                        `;
                         tableBody.appendChild(row);
                         form.reset();
                     } else {
@@ -74,6 +78,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const deleteBtn = e.target.closest(".delete-btn");
 
         // ---- Edit ----
+        let featuredText = row.querySelector(".product-featured").textContent.trim();
         if (editBtn) {
             const currentData = {
                 name: row.querySelector(".product-name").textContent,
@@ -82,6 +87,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 condition: row.querySelector(".product-cond").textContent,
                 stock: row.querySelector(".product-stock").textContent,
                 category: row.querySelector(".product-category").dataset.categoryId,
+
+                featured: featuredText === "✅" || featuredText === "true",
+
                 image: row.querySelector("img") ? row.querySelector("img").src : null
             };
 
@@ -109,7 +117,11 @@ document.addEventListener("DOMContentLoaded", function () {
                         </div>
                         <div class="col-md-6 mb-2">
                             <label>Condition</label>
-                            <input id="swal-condition" class="form-control" value="${currentData.condition}">
+                            <select id="swal-condition" class="form-control">
+                              <option value="New" ${currentData.condition === "New" ? "selected" : ""}>New</option>
+                              <option value="Used" ${currentData.condition === "Used" ? "selected" : ""}>Used</option>
+                              <option value="Refurbished" ${currentData.condition === "Refurbished" ? "selected" : ""}>Refurbished</option>
+                            </select>
                         </div>
                         <div class="col-md-6 mb-2">
                             <label>Stock</label>
@@ -120,6 +132,12 @@ document.addEventListener("DOMContentLoaded", function () {
                             <select id="swal-category" class="form-control">
                                 ${categoriesOptions}
                             </select>
+                        </div>
+                        <div class="col-md-12 mb-2">
+                            <div class="form-check">
+                                <input id="swal-featured" class="form-check-input" type="checkbox" ${currentData.featured ? "checked" : ""}>
+                                <label class="form-check-label" for="swal-featured">Featured</label>
+                            </div>
                         </div>
                         <div class="col-md-12 mb-2">
                             <label>Image</label><br>
@@ -139,6 +157,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     formData.append("condition", document.getElementById("swal-condition").value);
                     formData.append("stock_quantity", document.getElementById("swal-stock").value);
                     formData.append("category", document.getElementById("swal-category").value);
+                    formData.append("is_featured", document.getElementById("swal-featured").checked ? "true" : "false");
 
                     const newImage = document.getElementById("swal-image").files[0];
                     if (newImage) {

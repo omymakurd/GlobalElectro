@@ -43,20 +43,8 @@
         </div>
     </div>
 
-    <!-- نموذج إضافة Category مباشرة -->
-    <div class="mb-5">
-        <h4>Add New Category</h4>
-        <form method="POST" action="{% url 'category_list' %}" class="row g-3">
-            {% csrf_token %}
-            <div class="col-md-6">
-                <input type="text" name="name" class="form-control" placeholder="Category Name" required>
-            </div>
-            <div class="col-md-6">
-                <button type="submit" class="btn btn-info">Add Category</button>
-            </div>
-        </form>
-    </div>
-
+    
+    
     <!-- آخر الطلبات -->
     <h4 class="mb-3">Latest Orders</h4>
     <div class="table-responsive">

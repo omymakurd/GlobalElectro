@@ -3,27 +3,190 @@
 {% block title %}Home - Global Electro{% endblock %}
 
 {% block content %}
+
+<!-- Hero Section -->
 <div class="hero-section position-relative">
   <video autoplay muted loop playsinline class="hero-video">
     <source src="{% static 'videos/home.mp4' %}" type="video/mp4">
   </video>
+
   <div class="hero-text">
-  <h1>
-    High Quality Used <br>
-    <span>Electrical Appliances</span><br>
-    Germany, Gulf countries <br>
-    to Egypt & MENA
-  </h1>
-  <p class="mt-3">
-    Reliable German and imported appliances made affordable.
-    Each item <br>is carefully  inspected to guarantee quality before
-    it reaches your home in Egypt.
-  </p>
-  <div class="mt-4">
-    <a href="/products/" class="btn btn-warning me-2">Shop Now</a>
-    <a href="/about/" class="btn btn-outline-light">Learn More</a>
+    <h1>
+      High Quality Used <br>
+      <span>Electrical Appliances</span><br>
+      Germany, Gulf countries <br>
+      to Egypt & MENA
+    </h1>
+    <p class="mt-3">
+      Reliable German and imported appliances made affordable.
+      Each item <br>is carefully inspected to guarantee quality before
+      it reaches your home in Egypt.
+    </p>
+    <div class="mt-4">
+      <a href="/products/" class="btn btn-warning me-2">Shop Now</a>
+      <a href="/about/" class="btn btn-outline-light">Learn More</a>
+    </div>
   </div>
 </div>
 
+<!-- Categories Section -->
+<section class="py-5 bg-light">
+  <div class="container text-center">
+    <h2 class="mb-4 fw-bold brand-text">Shop by Category</h2>
+    <div class="d-flex justify-content-center flex-wrap gap-4">
+      <div class="card shadow-sm category-card">
+        <img src="{% static 'images/Home-Appliances.jpg' %}" class="card-img-top" alt="Home Appliances">
+        <div class="card-body">
+          <h5 class="card-title">Home Appliances</h5>
+        </div>
+      </div>
+      <div class="card shadow-sm category-card">
+        <img src="{% static 'images/Kitchen-Appliances.jpg' %}" class="card-img-top" alt="Kitchen Appliances">
+        <div class="card-body">
+          <h5 class="card-title">Kitchen Appliances</h5>
+        </div>
+      </div>
+      <div class="card shadow-sm category-card">
+        <img src="{% static 'images/Personal-Electronics.jpg' %}" class="card-img-top" alt="Personal Electronics">
+        <div class="card-body">
+          <h5 class="card-title">Personal Electronics</h5>
+        </div>
+      </div>
+      <div class="card shadow-sm category-card">
+        <img src="{% static 'images/Office-Electronics.jpg' %}" class="card-img-top" alt="Office Electronics">
+        <div class="card-body">
+          <h5 class="card-title">Office Electronics</h5>
+        </div>
+      </div>
+      <div class="card shadow-sm category-card">
+        <img src="{% static 'images/Entertainment-Media.jpg' %}" class="card-img-top" alt="Entertainment & Media">
+        <div class="card-body">
+          <h5 class="card-title">Entertainment & Media</h5>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Featured Products -->
+<section class="py-5">
+  <div class="container text-center">
+    <h2 class="mb-4 fw-bold brand-text">Featured Products</h2>
+    <div class="row g-4">
+      {% for product in featured_products %}
+      <div class="col-md-3 d-flex">
+        <div class="card shadow-sm product-card flex-fill h-100" data-id="{{ product.id }}">
+          <img src="{{ product.image.url }}" class="card-img-top product-img" alt="{{ product.name }}">
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title">{{ product.name }}</h5>
+            <p class="card-text text-muted">{{ product.description|truncatechars:50 }}</p>
+
+            {% if product.stock_quantity|default:0 > 0 %}
+            <span class="badge bg-success mb-2">In Stock</span>
+            {% else %}
+            <span class="badge bg-danger mb-2">Out of Stock</span>
+            {% endif %}
+
+            <h4 class="text-primary fw-bold mb-3">{{ product.price }} EGP</h4>
+
+            <div class="d-flex flex-column gap-2">
+              <button class="btn btn-warning w-100">Add to Cart</button>
+              <button class="btn btn-outline-secondary w-100 view-details-btn" data-id="{{ product.id }}"
+                data-name="{{ product.name }}" data-description="{{ product.description }}"
+                data-price="{{ product.price }}" data-condition="{{ product.condition }}"
+                data-stock="{{ product.stock_quantity }}" data-image="{{ product.image.url }}">
+                View Details
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+</section>
+
+<!-- Product Details Modal -->
+<!-- Product Details Modal -->
+<div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="productModalLabel">Product Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body row">
+        <div class="col-md-6">
+          <img id="modal-product-image" src="" class="img-fluid rounded" alt="Product">
+        </div>
+        <div class="col-md-6">
+          <h3 id="modal-product-name"></h3>
+          <p id="modal-product-description" class="text-muted"></p>
+          <ul class="list-unstyled">
+            <li><strong>Condition:</strong> <span id="modal-product-condition"></span></li>
+            <li><strong>Status:</strong> <span id="modal-product-stock"></span></li>
+          </ul>
+          <h4 class="text-primary fw-bold mb-3"><span id="modal-product-price"></span> EGP</h4>
+
+          <!-- اختيار الكمية -->
+          <div class="mb-3">
+            <label for="modal-product-quantity" class="form-label">Quantity</label>
+            <input type="number" id="modal-product-quantity" class="form-control" value="1" min="1"
+              style="max-width:120px;">
+          </div>
+
+          <!-- زر اضافة للكارت -->
+          <button class="btn btn-warning w-100" id="modal-add-to-cart">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
+
+<!-- Testimonials -->
+<section class="py-5 bg-light">
+  <div class="container text-center">
+    <h2 class="mb-4 fw-bold brand-text">What Our Customers Say</h2>
+    <div id="testimonialCarousel" class="carousel slide" data-bs-ride="carousel">
+      <div class="carousel-inner">
+        <div class="carousel-item active">
+          <blockquote class="blockquote">
+            <p>"Excellent quality and fast delivery. Highly recommend GlobalElectro!"</p>
+            <footer class="blockquote-footer">Ahmed M. from Cairo</footer>
+          </blockquote>
+        </div>
+        <div class="carousel-item">
+          <blockquote class="blockquote">
+            <p>"I got my fridge from Germany in perfect condition, at half the price!"</p>
+            <footer class="blockquote-footer">Sara K. from Giza</footer>
+          </blockquote>
+        </div>
+        <div class="carousel-item">
+          <blockquote class="blockquote">
+            <p>"Professional service and trustworthy appliances. Thank you!"</p>
+            <footer class="blockquote-footer">Omar H. from Alexandria</footer>
+          </blockquote>
+        </div>
+      </div>
+      <button class="carousel-control-prev" type="button" data-bs-target="#testimonialCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#testimonialCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon"></span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- Call to Action -->
+<section class="py-5 text-center" style="background:linear-gradient(90deg,#001f3f,#003366); color:white;">
+  <div class="container">
+    <h2 class="fw-bold">Ready to Upgrade Your Home?</h2>
+    <p class="mb-4">Discover top-quality appliances imported from Germany & Gulf countries.</p>
+    <a href="/products/" class="btn btn-warning btn-lg">Start Shopping</a>
+  </div>
+</section>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script src="{% static 'js/add_product_cart.js' %}"></script>
 {% endblock %}

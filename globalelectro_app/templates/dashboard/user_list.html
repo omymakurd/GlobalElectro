@@ -1,10 +1,43 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Users{% endblock %}
 {% block content %}
 <div class="container mt-5">
     <h2 class="mb-4">Users</h2>
-    <a href="{% url 'user_add' %}" class="btn btn-success mb-3">Add New User</a>
 
+    <!-- إضافة مستخدم جديد -->
+    <form id="user-form" class="mb-4">
+        {% csrf_token %}
+        <input type="hidden" id="user_id" name="user_id" value="">
+        <div class="row g-2">
+            <div class="col-md-3">
+                <input type="text" name="first_name" class="form-control" placeholder="First Name" required>
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="last_name" class="form-control" placeholder="Last Name" required>
+            </div>
+            <div class="col-md-3">
+                <input type="email" name="email" class="form-control" placeholder="Email" required>
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="phone" class="form-control" placeholder="Phone">
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="address" class="form-control" placeholder="Address">
+            </div>
+            <div class="col-md-2">
+                <select name="role" class="form-control" required>
+                    <option value="admin">Admin</option>
+                    <option value="customer">Customer</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Add</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- جدول المستخدمين -->
     <table class="table table-striped table-bordered">
         <thead class="table-dark">
             <tr>
@@ -14,24 +47,27 @@
                 <th>Role</th>
                 <th>Phone</th>
                 <th>Address</th>
+                <th>Actions</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="users-table-body">
             {% for user in users %}
-            <tr>
-                <td>{{ user.user_id }}</td>
-                <td>{{ user.first_name }} {{ user.last_name }}</td>
-                <td>{{ user.email }}</td>
-                <td>{{ user.role }}</td>
-                <td>{{ user.phone }}</td>
-                <td>{{ user.address }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="6" class="text-center">No users found</td>
+            <tr data-id="{{ user.user_id }}">
+                <td class="user_user_id">{{ user.user_id }}</td>
+                <td class="user_name">{{ user.first_name }} {{ user.last_name }}</td>
+                <td class="user_email">{{ user.email }}</td>
+                <td class="user_role">{{ user.role }}</td>
+                <td class="user_phone">{{ user.phone }}</td>
+                <td class="user_address">{{ user.address }}</td>
+                <td>
+                    <button class="btn btn-sm btn-warning edit-user">Edit</button>
+                    <button class="btn btn-sm btn-danger delete-user">Delete</button>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{% static 'js/user_ajax.js' %}"></script>
 {% endblock %}

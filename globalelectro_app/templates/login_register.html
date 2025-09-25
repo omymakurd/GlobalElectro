@@ -53,7 +53,7 @@
           {% endif %}
         {% endfor %}
 
-        <form method="POST" action="/create_user">
+        <form method="POST" action="/create_user/">
           {% csrf_token %}
           <div class="mb-3">
             <label class="form-label">First Name</label>
