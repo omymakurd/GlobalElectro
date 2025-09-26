@@ -3,9 +3,12 @@ from django.contrib import messages
 from django.contrib.auth.hashers import make_password, check_password
 from functools import wraps
 from django.http import JsonResponse
-from .models import Product, Category, Users, CustomerOrder
+from .models import *
 import secrets
 import string
+from django.views.decorators.csrf import csrf_exempt
+import json
+from django.shortcuts import render
 
 # ===== Helpers =====
 def generate_strong_password(length=12):
@@ -61,6 +64,7 @@ def create_user(request):
         request.session['first_name'] = user.first_name
         request.session['user_id'] = user.user_id
         request.session['role'] = user.role
+        
         merge_session_cart(request)
         messages.success(request, "Account created & logged in successfully", extra_tags='register')
         return redirect('home')
@@ -79,7 +83,10 @@ def login_user(request):
                 request.session['user_id'] = user.user_id
                 request.session['role'] = user.role
                 merge_session_cart(request)
+                print("SESSION NOW:", dict(request.session))
+
                 messages.success(request, "Logged in successfully", extra_tags='login')
+                
                 if user.role == 'admin':
                     return redirect('admin_dashboard')
                 else:
@@ -303,40 +310,136 @@ def order_list(request):
     orders = CustomerOrder.objects.all().order_by('-created_at')
     return render(request, 'dashboard/order_list.html', {'orders': orders})
 #======== cart =======
-'''
+@csrf_exempt
+
+
+# إضافة منتج للكارت
+@csrf_exempt
+
 def add_to_cart(request):
-    product_id = request.POST.get('product_id')
-    quantity = int(request.POST.get('quantity', 1))
-    product = Product.objects.get(pk=product_id)
+    try:
+        if request.method != "POST":
+            return JsonResponse({"success": False, "message": "Invalid request method"})
 
-    if request.user.is_authenticated:  # المستخدم مسجل
-        cart_item, created =  CartItem.objects.get_or_create(
-            user=request.user,
-            product=product,
-            defaults={'quantity': quantity}
-        )
-        if not created:
-            cart_item.quantity += quantity
-            cart_item.save()
-    else:  # مستخدم غير مسجل
-        session_cart = request.session.get('cart', {})
-        session_cart[str(product_id)] = session_cart.get(str(product_id), 0) + quantity
-        request.session['cart'] = session_cart
+        data = json.loads(request.body)
+        product_id = data.get("product_id")
+        quantity = int(data.get("quantity", 1))
+        if quantity < 1:
+            quantity = 1
 
-    return JsonResponse({'status': 'success'})
+        if not product_id:
+            return JsonResponse({"success": False, "message": "Product ID is required"})
 
-# ===== Cart Helpers =====
+        product = get_object_or_404(Product, pk=product_id)
+
+        user_id = request.session.get("user_id")
+        if user_id:
+            user = get_object_or_404(Users, pk=user_id)
+            cart_item, created = CartItem.objects.get_or_create(
+                user=user,
+                product=product,
+                defaults={"quantity": quantity}  # مهم
+            )
+            if not created:
+                cart_item.quantity += quantity
+                cart_item.save()
+            return JsonResponse({"success": True, "message": "Added to cart (DB)"})
+
+        # Session cart للمستخدمين غير المسجلين
+        session_cart = request.session.get("cart", {})
+        if str(product_id) in session_cart:
+            session_cart[str(product_id)] += quantity
+        else:
+            session_cart[str(product_id)] = quantity
+        request.session["cart"] = session_cart
+        return JsonResponse({"success": True, "message": "Added to cart (Session)"})
+
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)})
+
+
+# عرض الكارت
+def view_cart(request):
+
+    cart_items = []
+    total = 0
+
+    # لو المستخدم مسجل دخول، جلب الكارت من DB
+    if request.user.is_authenticated:
+        try:
+            user = Users.objects.get(email=request.user.email)
+        except Users.DoesNotExist:
+            user = None
+
+        if user:
+            items = CartItem.objects.filter(user=user)
+            for item in items:
+                item_total = item.product.price * item.quantity
+                total += item_total
+                cart_items.append({
+                    "product": item.product,
+                    "quantity": item.quantity,
+                    "item_total": item_total,
+                    "cart_item_id": item.cart_item_id 
+
+                })
+
+    # لو غير مسجل، جلب الكارت من Session
+    else:
+        session_cart = request.session.get("cart", {})
+        for product_id, quantity in session_cart.items():
+            if not str(product_id).isdigit():
+                continue
+            product = get_object_or_404(Product, pk=int(product_id))
+            item_total = product.price * quantity
+            total += item_total
+            cart_items.append({
+                "product": product,
+                "quantity": quantity,
+                "item_total": item_total,
+                
+            })
+
+    context = {
+        "cart_items": cart_items,
+        "total": total
+    }
+    return render(request, "cart/cart.html", context)
+
+# ===== Helpers =====
 def merge_session_cart(request):
+    # جلب السلة من الجلسة
     session_cart = request.session.get('cart', {})
-    for product_id, quantity in session_cart.items():
-        product = Product.objects.get(pk=product_id)
+
+    if not request.user.is_authenticated:
+        return  # إذا المستخدم مش مسجل، ما نعمل شي
+
+    user = request.user
+
+    for product_id, item_data in session_cart.items():
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            continue  # إذا المنتج غير موجود، نتخطاه
+
+        quantity = item_data.get('quantity', 1)  # افتراضي 1 إذا ما موجود
+
+        # استخدام get_or_create مع defaults لتفادي NullError
         cart_item, created = CartItem.objects.get_or_create(
-            user=request.user,
+            user=user,
             product=product,
             defaults={'quantity': quantity}
         )
+
         if not created:
+            # لو العنصر موجود مسبقًا، نجمع الكميات
             cart_item.quantity += quantity
             cart_item.save()
-    request.session['cart'] = {}  # مسح الـ Session Cart
-    '''
+
+    # بعد الدمج، ننظف السلة من الجلسة
+    request.session['cart'] = {}
+    request.session.modified = True
+def delete_cart_item(request, item_id):
+    cart_item = CartItem.objects.get(id=item_id)
+    cart_item.delete()
+    return redirect('cart') 
