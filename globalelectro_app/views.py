@@ -367,88 +367,42 @@ def add_to_cart(request):
 
 
 # عرض الكارت
-'''
-def view_cart(request):
 
-    cart_items = []
-    total = 0
-
-    # لو المستخدم مسجل دخول، جلب الكارت من DB
-    if request.user.is_authenticated:
-        try:
-            user = Users.objects.get(email=request.user.email)
-        except Users.DoesNotExist:
-            user = None
-
-        if user:
-            items = CartItem.objects.filter(user=user)
-            for item in items:
-                item_total = item.product.price * item.quantity
-                total += item_total
-                cart_items.append({
-                    "product": item.product,
-                    "quantity": item.quantity,
-                    "item_total": item_total,
-                    "cart_item_id": item.cart_item_id 
-
-                })
-
-    # لو غير مسجل، جلب الكارت من Session
-    else:
-        session_cart = request.session.get("cart", {})
-        for product_id, quantity in session_cart.items():
-            if not str(product_id).isdigit():
-                continue
-            product = get_object_or_404(Product, pk=int(product_id))
-            item_total = product.price * quantity
-            total += item_total
-            cart_items.append({
-                "product": product,
-                "quantity": quantity,
-                "item_total": item_total,
-                
-            })
-
-    context = {
-        "cart_items": cart_items,
-        "total": total
-    }
-    return render(request, "cart/cart.html", context)
-    '''
 
 # ===== Helpers =====
 def merge_session_cart(request):
-    # جلب السلة من الجلسة
     session_cart = request.session.get('cart', {})
+    user_id = request.session.get('user_id')
 
-    if not request.user.is_authenticated:
-        return  # إذا المستخدم مش مسجل، ما نعمل شي
+    if not user_id:  # إذا المستخدم مش مسجل
+        return
 
-    user = request.user
+    try:
+        user = Users.objects.get(pk=user_id)
+    except Users.DoesNotExist:
+        return
 
-    for product_id, item_data in session_cart.items():
+    for product_id_str, quantity in session_cart.items():
         try:
-            product = Product.objects.get(id=product_id)
-        except Product.DoesNotExist:
-            continue  # إذا المنتج غير موجود، نتخطاه
+            product_id = int(product_id_str)
+            product = Product.objects.get(product_id=product_id)
+        except (ValueError, Product.DoesNotExist):
+            continue
 
-        quantity = item_data.get('quantity', 1)  # افتراضي 1 إذا ما موجود
-
-        # استخدام get_or_create مع defaults لتفادي NullError
         cart_item, created = CartItem.objects.get_or_create(
             user=user,
             product=product,
-            defaults={'quantity': quantity}
+            defaults={'quantity': int(quantity)}
         )
-
         if not created:
-            # لو العنصر موجود مسبقًا، نجمع الكميات
-            cart_item.quantity += quantity
+            cart_item.quantity += int(quantity)
             cart_item.save()
 
-    # بعد الدمج، ننظف السلة من الجلسة
+    # تنظيف session بعد الدمج
     request.session['cart'] = {}
     request.session.modified = True
+
+
 
 def view_cart(request):
     user_id = request.session.get("user_id")
@@ -462,13 +416,18 @@ def view_cart(request):
         total = cart_items.aggregate(total=Sum("item_total"))["total"] or 0
     else:  # زائر (Session cart)
         session_cart = request.session.get("cart", {})
-        for product_id, quantity in session_cart.items():
-            product = get_object_or_404(Product, pk=product_id)
+        for product_id_str, quantity in session_cart.items():
+            try:
+                product_id = int(product_id_str)
+                product = Product.objects.get(pk=product_id)
+            except (Product.DoesNotExist, ValueError):
+                continue  # تجاهل المنتج المفقود
             item_total = product.price * quantity
             cart_items.append({
                 "product": product,
                 "quantity": quantity,
                 "item_total": item_total,
+                "cart_item_id": None
             })
         total = sum(item["item_total"] for item in cart_items)
 
@@ -476,29 +435,75 @@ def view_cart(request):
         "cart_items": cart_items,
         "total": total
     })
+
+# ==================== تحديث عنصر ====================
 def update_cart_item(request, item_id):
     if request.method == "POST":
-        cart_item = get_object_or_404(CartItem, cart_item_id=item_id)
+        quantity = request.POST.get("quantity", 1)
         try:
-            quantity = int(request.POST.get("quantity", 1))
+            quantity = int(quantity)
             if quantity < 1:
                 quantity = 1
         except ValueError:
             quantity = 1
 
-        cart_item.quantity = quantity
-        cart_item.save()
-        return redirect("view_cart")
+        user_id = request.session.get("user_id")
+        if user_id:
+            # DB cart
+            cart_item = get_object_or_404(CartItem, cart_item_id=item_id, user_id=user_id)
+            cart_item.quantity = quantity
+            cart_item.save()
+        else:
+            # Session cart: هنا item_id هو product_id
+            session_cart = request.session.get("cart", {})
+            if str(item_id) in session_cart:
+                session_cart[str(item_id)] = quantity
+                request.session["cart"] = session_cart
+                request.session.modified = True
+
     return redirect("view_cart")
 
+
+def update_cart_item_session(request, product_id):
+    if request.method == "POST":
+        quantity = request.POST.get("quantity", 1)
+        try:
+            quantity = int(quantity)
+            if quantity < 1:
+                quantity = 1
+        except ValueError:
+            quantity = 1
+        cart = request.session.get("cart", {})
+        cart[str(product_id)] = quantity
+        request.session["cart"] = cart
+        request.session.modified = True
+        messages.success(request, "Cart updated successfully.")
+    return redirect("view_cart")
 
 # ==================== حذف عنصر ====================
 def delete_cart_item(request, item_id):
-    cart_item = get_object_or_404(CartItem, cart_item_id=item_id)
-    cart_item.delete()
+    user_id = request.session.get("user_id")
+    if user_id:
+        cart_item = get_object_or_404(CartItem, cart_item_id=item_id, user_id=user_id)
+        cart_item.delete()
+    else:
+        session_cart = request.session.get("cart", {})
+        if str(item_id) in session_cart:
+            del session_cart[str(item_id)]
+            request.session["cart"] = session_cart
+            request.session.modified = True
+    messages.success(request, "Item removed from cart.")
     return redirect("view_cart")
 
 
+def delete_cart_item_session(request, product_id):
+    session_cart = request.session.get("cart", {})
+    if str(product_id) in session_cart:
+        del session_cart[str(product_id)]
+        request.session["cart"] = session_cart
+        request.session.modified = True
+        messages.success(request, "Item removed from cart.")
+    return redirect("view_cart")
 # ==================== Checkout (Placeholder) ====================
 
 

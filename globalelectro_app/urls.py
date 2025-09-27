@@ -33,8 +33,14 @@ urlpatterns = [
     #cart
     
     path("cart/add/", views.add_to_cart, name="add_to_cart"),
-    path("cart/", views.view_cart, name="view_cart"),
-    path("cart/update/<int:item_id>/", views.update_cart_item, name="update_cart_item"),
-    path("cart/delete/<int:item_id>/", views.delete_cart_item, name="delete_cart_item"),
+    path('cart/', views.view_cart, name='view_cart'),
+
+    # Update
+    path('cart/update/<int:item_id>/', views.update_cart_item, name='update_cart_item'),
+    path('cart/update-session/<int:product_id>/', views.update_cart_item_session, name='update_cart_item_session'),
+
+    path('cart/delete/<int:item_id>/', views.delete_cart_item, name='delete_cart_item'),
+    path('cart/delete-session/<int:product_id>/', views.delete_cart_item_session, name='delete_cart_item_session'),
+
     path("checkout/", views.checkout, name="checkout"),
 ]
