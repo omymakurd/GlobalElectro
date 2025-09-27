@@ -599,3 +599,34 @@ def checkout(request):
         "total_price": total_price,
         "user": user
     })
+
+
+def all_products(request):
+    search_query = request.GET.get('search', '')  # ناخد قيمة البحث
+    sort_option = request.GET.get('sort', '')      # ناخد قيمة الفلتر
+
+    products = Product.objects.all()
+
+    # فلتر البحث
+    if search_query:
+        products = products.filter(name__icontains=search_query)
+
+    # فلتر الفرز
+    if sort_option == 'newest':
+        products = products.order_by('-created_at')
+    elif sort_option == 'price_high':
+        products = products.order_by('-price')
+    elif sort_option == 'price_low':
+        products = products.order_by('price')
+    elif sort_option == 'featured':
+        products = products.order_by('-is_featured')
+    else:
+        products = products.order_by('name')  # ترتيب افتراضي
+
+    context = {
+        'products': products,
+        'search_query': search_query,
+        'sort_option': sort_option,
+        'categories': Category.objects.all()
+    }
+    return render(request, 'products/all_product.html', context)

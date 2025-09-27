@@ -43,4 +43,10 @@ urlpatterns = [
     path('cart/delete-session/<int:product_id>/', views.delete_cart_item_session, name='delete_cart_item_session'),
 
     path("checkout/", views.checkout, name="checkout"),
+
+
+    path('all-products/', views.all_products, name='all_products'),
+
+
+   
 ]

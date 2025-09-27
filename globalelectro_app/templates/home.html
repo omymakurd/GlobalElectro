@@ -23,7 +23,7 @@
       it reaches your home in Egypt.
     </p>
     <div class="mt-4">
-      <a href="/products/" class="btn btn-warning me-2">Shop Now</a>
+      <a href="{% url 'all_products' %}" class="btn btn-warning me-2">Shop Now</a>
       <a href="/about/" class="btn btn-outline-light">Learn More</a>
     </div>
   </div>
@@ -34,36 +34,57 @@
   <div class="container text-center">
     <h2 class="mb-4 fw-bold brand-text">Shop by Category</h2>
     <div class="d-flex justify-content-center flex-wrap gap-4">
-      <div class="card shadow-sm category-card">
-        <img src="{% static 'images/Home-Appliances.jpg' %}" class="card-img-top" alt="Home Appliances">
-        <div class="card-body">
-          <h5 class="card-title">Home Appliances</h5>
+
+      <!-- Home Appliances -->
+      <a href="{% url 'all_products' %}?category={{ 'Home Appliances'|urlencode }}" class="text-decoration-none text-dark">
+        <div class="card shadow-sm category-card">
+          <img src="{% static 'images/Home-Appliances.jpg' %}" class="card-img-top" alt="Home Appliances">
+          <div class="card-body">
+            <h5 class="card-title">Home Appliances</h5>
+          </div>
         </div>
-      </div>
-      <div class="card shadow-sm category-card">
-        <img src="{% static 'images/Kitchen-Appliances.jpg' %}" class="card-img-top" alt="Kitchen Appliances">
-        <div class="card-body">
-          <h5 class="card-title">Kitchen Appliances</h5>
+      </a>
+
+      <!-- Kitchen Appliances -->
+      <a href="{% url 'all_products' %}?category={{ 'Kitchen Appliances'|urlencode }}" class="text-decoration-none text-dark">
+        <div class="card shadow-sm category-card">
+          <img src="{% static 'images/Kitchen-Appliances.jpg' %}" class="card-img-top" alt="Kitchen Appliances">
+          <div class="card-body">
+            <h5 class="card-title">Kitchen Appliances</h5>
+          </div>
         </div>
-      </div>
-      <div class="card shadow-sm category-card">
-        <img src="{% static 'images/Personal-Electronics.jpg' %}" class="card-img-top" alt="Personal Electronics">
-        <div class="card-body">
-          <h5 class="card-title">Personal Electronics</h5>
+      </a>
+
+      <!-- Personal Electronics -->
+      <a href="{% url 'all_products' %}?category={{ 'Personal Electronics'|urlencode }}" class="text-decoration-none text-dark">
+        <div class="card shadow-sm category-card">
+          <img src="{% static 'images/Personal-Electronics.jpg' %}" class="card-img-top" alt="Personal Electronics">
+          <div class="card-body">
+            <h5 class="card-title">Personal Electronics</h5>
+          </div>
         </div>
-      </div>
-      <div class="card shadow-sm category-card">
-        <img src="{% static 'images/Office-Electronics.jpg' %}" class="card-img-top" alt="Office Electronics">
-        <div class="card-body">
-          <h5 class="card-title">Office Electronics</h5>
+      </a>
+
+      <!-- Office Electronics -->
+      <a href="{% url 'all_products' %}?category={{ 'Office Electronics'|urlencode }}" class="text-decoration-none text-dark">
+        <div class="card shadow-sm category-card">
+          <img src="{% static 'images/Office-Electronics.jpg' %}" class="card-img-top" alt="Office Electronics">
+          <div class="card-body">
+            <h5 class="card-title">Office Electronics</h5>
+          </div>
         </div>
-      </div>
-      <div class="card shadow-sm category-card">
-        <img src="{% static 'images/Entertainment-Media.jpg' %}" class="card-img-top" alt="Entertainment & Media">
-        <div class="card-body">
-          <h5 class="card-title">Entertainment & Media</h5>
+      </a>
+
+      <!-- Entertainment & Media -->
+      <a href="{% url 'all_products' %}?category={{ 'Entertainment & Media'|urlencode }}" class="text-decoration-none text-dark">
+        <div class="card shadow-sm category-card">
+          <img src="{% static 'images/Entertainment-Media.jpg' %}" class="card-img-top" alt="Entertainment & Media">
+          <div class="card-body">
+            <h5 class="card-title">Entertainment & Media</h5>
+          </div>
         </div>
-      </div>
+      </a>
+
     </div>
   </div>
 </section>

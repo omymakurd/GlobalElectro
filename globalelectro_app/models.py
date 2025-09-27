@@ -1,6 +1,7 @@
 from django.db import models
 import re
 from django.contrib.auth.hashers import make_password
+from django.utils.text import slugify
 
 
 class UserManager(models.Manager):
@@ -54,7 +55,6 @@ class Category(models.Model):
     name = models.CharField(max_length=45, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
     class Meta:
         db_table = 'category'
 
