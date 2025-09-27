@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Page Header -->
+    <div class="text-center mb-5">
+        <h1 class="fw-bold">About GlobalElectro</h1>
+        <p class="text-muted fs-5">Learn more about our mission and vision</p>
+    </div>
+
+    <!-- Project Description -->
+    <div class="row align-items-center mb-5 flex-column-reverse flex-md-row">
+        <div class="col-md-6 mt-4 mt-md-0">
+            <h3 class="fw-bold mb-3">Our Mission</h3>
+            <p class="lead">
+                GlobalElectro is an E-commerce platform for selling used and imported electrical appliances and electronics 
+                from multiple sources (Germany, Gulf countries, and beyond) to customers in Egypt and the MENA region.
+            </p>
+            <p>
+                Our platform aims to provide high-quality appliances at affordable prices through a secure, responsive, 
+                and user-friendly marketplace. It is also scalable, with future potential to evolve into a 
+                community-driven platform where users can list and sell their own used appliances.
+            </p>
+        </div>
+        <div class="col-md-6">
+            <img src="{% static 'images/about.png' %}" alt="GlobalElectro" class="img-fluid rounded shadow-sm">
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="row text-center mb-5">
+        <div class="col-sm-6 col-md-4 mb-4">
+            <div class="p-4 border rounded shadow-sm h-100">
+                <i class="bi bi-check-circle fs-1 text-primary mb-3"></i>
+                <h4 class="fw-bold">High Quality</h4>
+                <p>We ensure all appliances meet strict quality standards before reaching our customers.</p>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-4 mb-4">
+            <div class="p-4 border rounded shadow-sm h-100">
+                <i class="bi bi-cash fs-1 text-success mb-3"></i>
+                <h4 class="fw-bold">Affordable Prices</h4>
+                <p>Our platform connects buyers with imported and used appliances at competitive prices.</p>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-4 mb-4">
+            <div class="p-4 border rounded shadow-sm h-100">
+                <i class="bi bi-shield-lock fs-1 text-warning mb-3"></i>
+                <h4 class="fw-bold">Secure & User-Friendly</h4>
+                <p>Enjoy a smooth shopping experience with secure payments and responsive design on any device.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="text-center py-5 rounded shadow-sm" style="background: linear-gradient(90deg, #f0f8ff, #e6f2ff);">
+        <h3 class="fw-bold mb-3">Join Our Journey</h3>
+        <p class="mb-4">Be part of GlobalElectro’s mission to deliver high-quality appliances across Egypt and the MENA region.</p>
+        <a href="{% url 'all_products' %}" class="btn btn-primary btn-lg px-5">Shop Now</a>
+    </div>
+</div>
+
+<!-- Optional CSS for hover effects -->
+<style>
+    .btn-primary:hover {
+        background-color: #004aad;
+        transition: 0.3s;
+    }
+
+    /* Adjust feature icons for smaller screens */
+    @media (max-width: 576px) {
+        .bi {
+            font-size: 2.5rem !important;
+        }
+    }
+</style>
+{% endblock %}

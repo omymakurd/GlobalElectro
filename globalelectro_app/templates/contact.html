@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+/* ======================== */
+/* Contact Section */
+.contact-section {
+    background: #f9f9f9;
+    padding: 80px 0;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+/* ======================== */
+/* Cards */
+.contact-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 30px 25px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.contact-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+/* ======================== */
+/* Form Styles */
+.contact-card .form-control {
+    border-radius: 8px;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    transition: border-color 0.3s ease;
+}
+.contact-card .form-control:focus {
+    border-color: #001f3f;
+    box-shadow: none;
+}
+
+/* ======================== */
+/* Buttons */
+.btn-primary {
+    background-color: #001f3f;
+    color: #fff;
+    border-radius: 8px;
+    padding: 10px 0;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+.btn-primary:hover {
+    background-color:  #ffc107;
+    transform: translateY(-2px);
+}
+
+/* ======================== */
+/* Contact Info Icons */
+.contact-info > i {
+    font-size: 20px;
+    color: #001f3f;
+    margin-right: 10px;
+}
+
+/* ======================== */
+/* Social Icons */
+.social-icons a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background-color: #e0e0e0;
+    color: #001f3f;
+    text-decoration: none;
+    margin-right: 8px;
+    font-size: 18px;
+    transition: all 0.3s ease;
+}
+.social-icons a i {
+    font-size: 18px; /* مستقل عن i بتاع contact info */
+}
+.social-icons a:hover {
+    background-color: #ffc107;
+    color: #001f3f;
+    transform: translateY(-2px);
+}
+
+/* ======================== */
+/* Responsive */
+@media (max-width: 992px) {
+    .contact-card {
+        padding: 25px 20px;
+    }
+}
+</style>
+
+<div class="contact-section">
+    <div class="container">
+        <!-- Header -->
+        <div class="text-center mb-5">
+            <h1>Contact Us</h1>
+            <p class="text-muted">We’re here to help. Send us a message and we’ll get back to you as soon as possible.</p>
+        </div>
+
+        <div class="row justify-content-center g-4">
+            <!-- Contact Form -->
+            <div class="col-lg-6">
+                <div class="contact-card">
+                    {% if messages %}
+                    <div>
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <form method="post" action="{% url 'contact' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="name" name="name" placeholder="Your Name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="you@example.com" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">Subject</label>
+                            <input type="text" class="form-control" id="subject" name="subject" placeholder="Message Subject" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Message</label>
+                            <textarea class="form-control" id="message" name="message" rows="5" placeholder="Write your message..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-send"></i> Send Message
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="col-lg-4">
+                <div class="contact-card contact-info">
+                    <h5 class="mb-4">Get in Touch</h5>
+                    <p><i class="bi bi-geo-alt"></i>123 Cairo Street, Cairo, Egypt</p>
+                    <p><i class="bi bi-envelope"></i>info@globalelectro.com</p>
+                    <p><i class="bi bi-telephone"></i>+20 123 456 7890</p>
+                    <p><i class="bi bi-globe"></i>www.globalelectro.com</p>
+
+                    <h6 class="mt-4 mb-3">Follow Us</h6>
+                    <div class="social-icons d-flex">
+                        <a href="#" title="Facebook"><i class="bi bi-facebook"></i></a>
+                        <a href="#" title="Twitter"><i class="bi bi-twitter"></i></a>
+                        <a href="#" title="Instagram"><i class="bi bi-instagram"></i></a>
+                        <a href="#" title="LinkedIn"><i class="bi bi-linkedin"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

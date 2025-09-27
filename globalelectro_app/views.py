@@ -13,6 +13,7 @@ from django.db.models import Sum
 from django.db.models import F
 from django.db import transaction
 from django.utils import timezone
+from django.core.mail import send_mail
 
 
 
@@ -602,16 +603,21 @@ def checkout(request):
 
 
 def all_products(request):
-    search_query = request.GET.get('search', '')  # ناخد قيمة البحث
-    sort_option = request.GET.get('sort', '')      # ناخد قيمة الفلتر
+    search_query = request.GET.get('search', '')   # البحث
+    sort_option = request.GET.get('sort', '')      # الفرز
+    category_name = request.GET.get('category', '') # فلتر الكاتيجوري
 
     products = Product.objects.all()
+
+    # فلتر الكاتيجوري
+    if category_name:
+        products = products.filter(category__name=category_name)
 
     # فلتر البحث
     if search_query:
         products = products.filter(name__icontains=search_query)
 
-    # فلتر الفرز
+    # الفرز
     if sort_option == 'newest':
         products = products.order_by('-created_at')
     elif sort_option == 'price_high':
@@ -627,6 +633,33 @@ def all_products(request):
         'products': products,
         'search_query': search_query,
         'sort_option': sort_option,
-        'categories': Category.objects.all()
+        'category_name': category_name,
+        'categories': Category.objects.all(),
     }
     return render(request, 'products/all_product.html', context)
+
+def about(request):
+    return render(request, 'about.html')
+def contact(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        subject = request.POST.get('subject')
+        message = request.POST.get('message')
+
+        # مثال: إرسال رسالة بريد إلكتروني
+        try:
+            send_mail(
+                f"{subject} - from {name}",
+                message,
+                email,  # from email
+                ['omyma_1994@hotmail.com'],  # to email
+                fail_silently=False,
+            )
+            messages.success(request, "Your message has been sent successfully!")
+        except:
+            messages.error(request, "Oops! Something went wrong.")
+
+        return redirect('contact')  # يرجع نفس الصفحة بعد الإرسال
+
+    return render(request, 'contact.html')
