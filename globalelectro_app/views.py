@@ -9,6 +9,12 @@ import string
 from django.views.decorators.csrf import csrf_exempt
 import json
 from django.shortcuts import render
+from django.db.models import Sum
+from django.db.models import F
+from django.db import transaction
+from django.utils import timezone
+
+
 
 # ===== Helpers =====
 def generate_strong_password(length=12):
@@ -343,7 +349,8 @@ def add_to_cart(request):
             if not created:
                 cart_item.quantity += quantity
                 cart_item.save()
-            return JsonResponse({"success": True, "message": "Added to cart (DB)"})
+            cart_count = CartItem.objects.filter(user=user).aggregate(total=Sum("quantity"))["total"] or 0
+            return JsonResponse({"success": True, "message": "Added to cart (DB)", "cart_count": cart_count})
 
         # Session cart للمستخدمين غير المسجلين
         session_cart = request.session.get("cart", {})
@@ -352,13 +359,15 @@ def add_to_cart(request):
         else:
             session_cart[str(product_id)] = quantity
         request.session["cart"] = session_cart
-        return JsonResponse({"success": True, "message": "Added to cart (Session)"})
+        cart_count = sum(session_cart.values())
+        return JsonResponse({"success": True, "message": "Added to cart (Session)","cart_count": cart_count})
 
     except Exception as e:
         return JsonResponse({"success": False, "message": str(e)})
 
 
 # عرض الكارت
+'''
 def view_cart(request):
 
     cart_items = []
@@ -405,6 +414,7 @@ def view_cart(request):
         "total": total
     }
     return render(request, "cart/cart.html", context)
+    '''
 
 # ===== Helpers =====
 def merge_session_cart(request):
@@ -439,7 +449,148 @@ def merge_session_cart(request):
     # بعد الدمج، ننظف السلة من الجلسة
     request.session['cart'] = {}
     request.session.modified = True
+
+def view_cart(request):
+    user_id = request.session.get("user_id")
+    cart_items = []
+    total = 0
+
+    if user_id:  # مستخدم مسجل
+        cart_items = CartItem.objects.filter(user_id=user_id).annotate(
+            item_total=F("quantity") * F("product__price")
+        )
+        total = cart_items.aggregate(total=Sum("item_total"))["total"] or 0
+    else:  # زائر (Session cart)
+        session_cart = request.session.get("cart", {})
+        for product_id, quantity in session_cart.items():
+            product = get_object_or_404(Product, pk=product_id)
+            item_total = product.price * quantity
+            cart_items.append({
+                "product": product,
+                "quantity": quantity,
+                "item_total": item_total,
+            })
+        total = sum(item["item_total"] for item in cart_items)
+
+    return render(request, "cart/cart.html", {
+        "cart_items": cart_items,
+        "total": total
+    })
+def update_cart_item(request, item_id):
+    if request.method == "POST":
+        cart_item = get_object_or_404(CartItem, cart_item_id=item_id)
+        try:
+            quantity = int(request.POST.get("quantity", 1))
+            if quantity < 1:
+                quantity = 1
+        except ValueError:
+            quantity = 1
+
+        cart_item.quantity = quantity
+        cart_item.save()
+        return redirect("view_cart")
+    return redirect("view_cart")
+
+
+# ==================== حذف عنصر ====================
 def delete_cart_item(request, item_id):
-    cart_item = CartItem.objects.get(id=item_id)
+    cart_item = get_object_or_404(CartItem, cart_item_id=item_id)
     cart_item.delete()
-    return redirect('cart') 
+    return redirect("view_cart")
+
+
+# ==================== Checkout (Placeholder) ====================
+
+
+def login_required_custom(view_func):
+    from functools import wraps
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.session.get("user_id"):
+            messages.error(request, "Please log in to access checkout.")
+            return redirect("login_register")
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+def checkout(request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        messages.error(request, "Please log in to access checkout.")
+        return redirect("login_register")
+
+    user = get_object_or_404(Users, pk=user_id)
+
+    # ===== جلب Cart Items =====
+    cart_items = CartItem.objects.filter(user=user).annotate(
+        item_total=F("quantity") * F("product__price")
+    )
+    total_price = cart_items.aggregate(total=Sum("item_total"))["total"] or 0
+
+    if not cart_items.exists():
+        messages.error(request, "Your cart is empty!")
+        return redirect("view_cart")
+
+    if request.method == "POST":
+        address = request.POST.get("address", user.address)
+        phone = request.POST.get("phone", user.phone)
+
+        # ===== استخدام transaction لضمان atomicity =====
+        try:
+            with transaction.atomic():
+                # التحقق من المخزون لكل منتج
+                for item in cart_items:
+                    if item.quantity > item.product.stock_quantity:
+                        messages.error(
+                            request,
+                            f"Insufficient stock for {item.product.name}. Available: {item.product.stock_quantity}"
+                        )
+                        return redirect("view_cart")
+
+                # إنشاء الطلب
+                order = CustomerOrder.objects.create(
+                    user=user,
+                    shipping_address=address,
+                    total_price=total_price,
+                    status="pending",
+                    created_at=timezone.now()
+                )
+
+                # تحويل CartItem → OrderItem
+                order_items = []
+                for item in cart_items:
+                    order_items.append(
+                        OrderItem(
+                            order=order,
+                            product=item.product,
+                            quantity=item.quantity,
+                            price=item.product.price
+                        )
+                    )
+                    # تحديث مخزون المنتجات
+                    item.product.stock_quantity -= item.quantity
+                    item.product.save()
+                OrderItem.objects.bulk_create(order_items)
+
+                # مسح السلة
+                cart_items.delete()
+                request.session['cart'] = {}
+                request.session.modified = True
+
+        except Exception as e:
+            messages.error(request, f"Error processing order: {str(e)}")
+            return redirect("view_cart")
+
+        return render(request, "orders/checkout.html", {
+            "cart_items": cart_items,
+            "total_price": total_price,
+            "user": user,
+            "order_success": True,
+            "order_id": order.order_id
+        })
+    
+
+    return render(request, "orders/checkout.html", {
+        "cart_items": cart_items,
+        "total_price": total_price,
+        "user": user
+    })
