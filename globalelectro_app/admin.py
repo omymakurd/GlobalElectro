@@ -1,7 +1,8 @@
 from django.contrib import admin
+from django.contrib.auth.hashers import make_password
 from .models import Users, Category, Product, CartItem, CustomerOrder, OrderItem
 
-
+# -------------------- Users Admin --------------------
 @admin.register(Users)
 class UsersAdmin(admin.ModelAdmin):
     list_display = (
@@ -12,14 +13,23 @@ class UsersAdmin(admin.ModelAdmin):
     list_filter = ('role', 'created_at')
     ordering = ('-created_at',)
 
+    def save_model(self, request, obj, form, change):
+        # أي مستخدم جديد يتم إضافته من Admin يكون Admin تلقائي
+        if not change:
+            obj.role = 'admin'
+        # تشفير كلمة المرور إذا لم تكن مشفرة مسبقاً
+        if obj.password and not obj.password.startswith('pbkdf2_'):
+            obj.password = make_password(obj.password)
+        super().save_model(request, obj, form, change)
 
+# -------------------- Category Admin --------------------
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('category_id', 'name', 'created_at', 'updated_at')
     search_fields = ('name',)
     ordering = ('name',)
 
-
+# -------------------- Product Admin --------------------
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = (
@@ -31,7 +41,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_filter = ('category', 'condition', 'is_featured')
     ordering = ('-created_at',)
 
-
+# -------------------- CartItem Admin --------------------
 @admin.register(CartItem)
 class CartItemAdmin(admin.ModelAdmin):
     list_display = ('cart_item_id', 'user', 'product', 'quantity', 'created_at')
@@ -39,7 +49,7 @@ class CartItemAdmin(admin.ModelAdmin):
     list_filter = ('created_at',)
     ordering = ('-created_at',)
 
-
+# -------------------- CustomerOrder Admin --------------------
 @admin.register(CustomerOrder)
 class CustomerOrderAdmin(admin.ModelAdmin):
     list_display = ('order_id', 'user', 'status', 'total_price', 'created_at')
@@ -47,7 +57,7 @@ class CustomerOrderAdmin(admin.ModelAdmin):
     list_filter = ('status', 'created_at')
     ordering = ('-created_at',)
 
-
+# -------------------- OrderItem Admin --------------------
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
     list_display = (

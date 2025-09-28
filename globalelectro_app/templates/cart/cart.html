@@ -6,12 +6,13 @@
     <h2 class="mb-4">Your Cart</h2>
 
     {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
     {% endif %}
 
     {% if cart_items %}
+    <div class="table-responsive">
         <table class="table table-bordered table-striped">
             <thead>
                 <tr>
@@ -24,53 +25,55 @@
             </thead>
             <tbody>
                 {% for item in cart_items %}
-                    {% if item.product %}
-                        <tr>
-                            <td>{{ item.product.name }}</td>
-                            <td>EGP{{ item.product.price|floatformat:2 }}</td>
-                            <td>
-                                <form method="post"
-                                      action="{% if item.cart_item_id %}{% url 'update_cart_item' item.cart_item_id %}{% else %}{% url 'update_cart_item_session' item.product.product_id %}{% endif %}"
-                                      class="d-flex justify-content-center align-items-center">
-                                    {% csrf_token %}
-                                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1" class="form-control me-2" style="width: 70px;">
-                                    <button type="submit" class="btn btn-primary btn-sm">Update</button>
-                                </form>
-                            </td>
-                            <td>EGP{{ item.item_total|floatformat:2 }}</td>
-                            <td class="text-center">
-                                <a href="{% if item.cart_item_id %}{% url 'delete_cart_item' item.cart_item_id %}{% else %}{% url 'delete_cart_item_session' item.product.product_id %}{% endif %}"
-                                   class="btn btn-danger btn-sm">
-                                    Delete
-                                </a>
-                            </td>
-                        </tr>
-                    {% endif %}
+                {% if item.product %}
+                <tr>
+                    <td>{{ item.product.name }}</td>
+                    <td>EGP{{ item.product.price|floatformat:2 }}</td>
+                    <td>
+                        <form method="post"
+                            action="{% if item.cart_item_id %}{% url 'update_cart_item' item.cart_item_id %}{% else %}{% url 'update_cart_item_session' item.product.product_id %}{% endif %}"
+                            class="d-flex justify-content-center align-items-center">
+                            {% csrf_token %}
+                            <input type="number" name="quantity" value="{{ item.quantity }}" min="1"
+                                class="form-control me-2" style="width: 70px;">
+                            <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                        </form>
+                    </td>
+                    <td>EGP{{ item.item_total|floatformat:2 }}</td>
+                    <td class="text-center">
+                        <a href="{% if item.cart_item_id %}{% url 'delete_cart_item' item.cart_item_id %}{% else %}{% url 'delete_cart_item_session' item.product.product_id %}{% endif %}"
+                            class="btn btn-danger btn-sm">
+                            Delete
+                        </a>
+                    </td>
+                </tr>
+                {% endif %}
                 {% endfor %}
             </tbody>
         </table>
-        <h4>Total: EGP{{ total|floatformat:2 }}</h4>
-        <a href="{% url 'checkout' %}" class="btn btn-success btn-lg">
-            Proceed to Checkout
-        </a>
+    </div>
+    <h4>Total: EGP{{ total|floatformat:2 }}</h4>
+    <a href="{% url 'checkout' %}" class="btn btn-success btn-lg w-100 mt-3">
+        Proceed to Checkout
+    </a>
     {% else %}
-        <p>Your cart is empty.</p>
+    <p>Your cart is empty.</p>
     {% endif %}
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const cartTable = document.querySelector(".table");
-    if (cartTable) {
-        cartTable.classList.add("table-striped");
-    }
+    document.addEventListener("DOMContentLoaded", function () {
+        const cartTable = document.querySelector(".table");
+        if (cartTable) {
+            cartTable.classList.add("table-striped");
+        }
 
-    const modalElement = document.getElementById("exampleModal");
-    if (modalElement) {
-        const myModal = new bootstrap.Modal(modalElement, { backdrop: true });
-    }
-});
+        const modalElement = document.getElementById("exampleModal");
+        if (modalElement) {
+            const myModal = new bootstrap.Modal(modalElement, { backdrop: true });
+        }
+    });
 </script>
 {% endblock %}

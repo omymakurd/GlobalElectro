@@ -1,55 +1,183 @@
-<!-- templates/dashboard/admin_dashboard.html -->
 {% extends "base.html" %}
 
 {% block title %}Admin Dashboard{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2 class="mb-3">Admin Dashboard</h2>
+<style>
+/* الألوان الأساسية */
+:root {
+  --primary: #0d1b2a;  /* أزرق غامق */
+  --accent: #e6c200;   /* ذهبي */
+  --neutral: #f8f9fa;  
+  --secondary: #6c757d;
+  --success: #4caf50;
+  --warning: #ff9800;
+  --danger: #e53935;
+  --info: #0288d1;
+}
+
+/* الكونتينر */
+.container {
+  background: var(--neutral);
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+/* العناوين */
+h2, h4 {
+  color: var(--primary);
+  font-weight: 700;
+  margin-bottom: 25px;
+}
+h2::before {
+  content: "📊";
+  margin-right: 8px;
+}
+
+/* أزرار الإدارة */
+.btn-main {
+  background-color: var(--primary);
+  color: #fff;
+  font-weight: 500;
+  padding: 10px 20px;
+  border-radius: 8px;
+  transition: 0.3s ease-in-out;
+}
+.btn-main:hover {
+  background-color: var(--accent);
+  color: var(--primary);
+}
+
+/* كروت الإحصائيات */
+.stat-card {
+  border-radius: 14px;
+  background: #fff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  text-align: center;
+}
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
+.icon-circle {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 12px auto;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  color: #fff;
+  border: 2px solid var(--accent);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+.stat-card p {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--secondary);
+  margin: 0;
+}
+.stat-card h2 {
+  font-size: 2rem;
+  color: var(--primary);
+  margin-top: 4px;
+}
+
+/* الجدول */
+.table {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.table thead th {
+  background-color: var(--primary);
+  color: #fff;
+  font-weight: 600;
+  text-align: center;
+}
+.table tbody td {
+  vertical-align: middle;
+  text-align: center;
+}
+.table tbody tr:hover {
+  background-color: rgba(212,175,55,0.1);
+  transition: 0.2s ease-in-out;
+}
+
+/* البادجز */
+.status-badge {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  background-color: var(--primary);
+  color: #fff;
+  font-weight: 500;
+}
+
+/* نصوص ذهبية */
+.text-gold {
+  color: var(--accent);
+  font-weight: 600;
+}
+</style>
+
+<div class="container mt-5 admin-dashboard">
+
+    <!-- العنوان -->
+    <h2 class="mb-5">Admin Dashboard</h2>
 
     <!-- أزرار الإدارة -->
-    <div class="mb-4">
-        <a href="{% url 'category_list' %}" class="btn btn-info me-2">Manage Categories</a>
-        <a href="{% url 'product_list' %}" class="btn btn-primary me-2">Manage Products</a>
-        <a href="{% url 'user_list' %}" class="btn btn-success me-2">Manage Users</a>
-        <a href="{% url 'order_list' %}" class="btn btn-warning">Manage Orders</a>
+    <div class="mb-5 d-flex flex-wrap gap-3">
+        <a href="{% url 'category_list' %}" class="btn btn-main">Manage Categories</a>
+        <a href="{% url 'product_list' %}" class="btn btn-main">Manage Products</a>
+        <a href="{% url 'order_list' %}" class="btn btn-main">Manage Orders</a>
     </div>
 
     <!-- الإحصائيات -->
-    <div class="row text-center mb-4">
-        <div class="col-md-4 mb-3">
-            <div class="card bg-primary text-white shadow-sm">
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card stat-card shadow-sm border-0">
                 <div class="card-body">
-                    <h5>Total Products</h5>
-                    <h3>{{ total_products }}</h3>
+                    <div class="icon-circle">
+                        <i class="bi bi-box-seam fs-4"></i>
+                    </div>
+                    <p>Total Products</p>
+                    <h2>{{ total_products }}</h2>
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
-            <div class="card bg-success text-white shadow-sm">
+        <div class="col-md-4">
+            <div class="card stat-card shadow-sm border-0">
                 <div class="card-body">
-                    <h5>Total Users</h5>
-                    <h3>{{ total_users }}</h3>
+                    <div class="icon-circle">
+                        <i class="bi bi-people fs-4"></i>
+                    </div>
+                    <p>Total Users</p>
+                    <h2>{{ total_users }}</h2>
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
-            <div class="card bg-warning text-white shadow-sm">
+        <div class="col-md-4">
+            <div class="card stat-card shadow-sm border-0">
                 <div class="card-body">
-                    <h5>Total Orders</h5>
-                    <h3>{{ total_orders }}</h3>
+                    <div class="icon-circle">
+                        <i class="bi bi-bag-check fs-4"></i>
+                    </div>
+                    <p>Total Orders</p>
+                    <h2>{{ total_orders }}</h2>
                 </div>
             </div>
         </div>
     </div>
 
-    
-    
     <!-- آخر الطلبات -->
     <h4 class="mb-3">Latest Orders</h4>
     <div class="table-responsive">
-        <table class="table table-striped table-bordered">
-            <thead class="table-dark">
+        <table class="table table-hover align-middle shadow-sm rounded">
+            <thead>
                 <tr>
                     <th>ID</th>
                     <th>User</th>
@@ -63,13 +191,15 @@
                 <tr>
                     <td>{{ order.order_id }}</td>
                     <td>{{ order.user.first_name }} {{ order.user.last_name }}</td>
-                    <td>{{ order.total_price }}</td>
-                    <td>{{ order.status }}</td>
+                    <td class="text-gold">{{ order.total_price }}</td>
+                    <td>
+                        <span class="badge status-badge">{{ order.status }}</span>
+                    </td>
                     <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" class="text-center">No orders found</td>
+                    <td colspan="5" class="text-center text-muted">No orders found</td>
                 </tr>
                 {% endfor %}
             </tbody>

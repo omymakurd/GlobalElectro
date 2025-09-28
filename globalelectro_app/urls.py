@@ -25,6 +25,10 @@ urlpatterns = [
    
     # Orders
     path('orders/', views.order_list, name='order_list'),
+    path('orders/update-status/<int:order_id>/', views.update_order_status, name='update_order_status'),
+    path('orders/details/<int:order_id>/', views.order_details, name='order_details'),
+    path('orders/print-invoice/<int:order_id>/', views.print_invoice, name='print_invoice'),
+    path('orders/send-email/<int:order_id>/', views.send_order_email_view, name='send_order_email'),
 
     # Categories
     path('categories/', views.category_list, name='category_list'),

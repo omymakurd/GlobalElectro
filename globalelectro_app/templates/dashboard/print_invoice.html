@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Invoice #{{ order.order_id }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white">
+            <h3>Invoice #{{ order.order_id }}</h3>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <h5>User Info</h5>
+                    <p><strong>Name:</strong> {{ order.user.first_name }} {{ order.user.last_name }}</p>
+                    <p><strong>Email:</strong> {{ order.user.email }}</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <h5>Order Info</h5>
+                    <p><strong>Date:</strong> {{ order.created_at|date:"Y-m-d H:i" }}</p>
+                    <p><strong>Status:</strong> {{ order.status|title }}</p>
+                    <p><strong>Total:</strong> ${{ order.total_price }}</p>
+                </div>
+            </div>
+
+            <h5>Products</h5>
+            <table class="table table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.products %}
+                    <tr>
+                        <td>{{ item.name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>${{ item.price }}</td>
+                        <td>${{ item.subtotal }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="text-end mt-4">
+                <h5>Total: ${{ order.total_price }}</h5>
+            </div>
+
+            <div class="mt-4 text-center">
+                <button onclick="window.print()" class="btn btn-primary">🖨️ Print Invoice</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

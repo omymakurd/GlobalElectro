@@ -19,59 +19,66 @@ toggleBtn.addEventListener("click", () => {
     icon.classList.replace("bi-sun", "bi-moon");
   }
 });
+
+// Hero text fade-in
 window.addEventListener("DOMContentLoaded", function () {
   const heroText = document.querySelector(".hero-text");
   setTimeout(() => {
     heroText.classList.add("show");
-  }, 300); // تأخير بسيط عشان يبين بشكل ناعم
+  }, 300);
 });
 
+// Category cards animation
+document.addEventListener("DOMContentLoaded", function () {
+  const cards = document.querySelectorAll(".category-card");
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("show");
+      }
+    });
+  }, { threshold: 0.2 });
 
-  document.addEventListener("DOMContentLoaded", function () {
-    const cards = document.querySelectorAll(".category-card");
+  cards.forEach((card) => observer.observe(card));
+});
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("show");
-        }
-      });
-    }, { threshold: 0.2 });
+// Product details modal
+document.addEventListener("DOMContentLoaded", function () {
+  const detailButtons = document.querySelectorAll(".view-details-btn");
+  const modal = new bootstrap.Modal(document.getElementById("productModal"));
+  const modalEl = document.getElementById("productModal");
 
-    cards.forEach((card) => {
-      observer.observe(card);
+  detailButtons.forEach(button => {
+    button.addEventListener("click", function () {
+      // تحديث البيانات من attributes
+      document.getElementById("modal-product-name").textContent = this.dataset.name;
+      document.getElementById("modal-product-description").textContent = this.dataset.description;
+      document.getElementById("modal-product-price").textContent = this.dataset.price;
+      document.getElementById("modal-product-condition").textContent = this.dataset.condition;
+      document.getElementById("modal-product-image").src = this.dataset.image;
+
+      const stockSpan = document.getElementById("modal-product-stock");
+      if (parseInt(this.dataset.stock) > 0) {
+        stockSpan.innerHTML = '<span class="badge bg-success">In Stock</span>';
+      } else {
+        stockSpan.innerHTML = '<span class="badge bg-danger">Out of Stock</span>';
+      }
+
+      // عرض المودال
+      modal.show();
     });
   });
-  document.addEventListener("DOMContentLoaded", function () {
-    const detailButtons = document.querySelectorAll(".view-details-btn");
-    const modal = new bootstrap.Modal(document.getElementById("productModal"));
 
-    detailButtons.forEach(button => {
-      button.addEventListener("click", function () {
-        // ناخد الداتا من attributes
-        const name = this.dataset.name;
-        const description = this.dataset.description;
-        const price = this.dataset.price;
-        const condition = this.dataset.condition;
-        const stock = this.dataset.stock;
-        const image = this.dataset.image;
+  // عند إغلاق المودال، إعادة تعيين البيانات وإزالة backdrop
+  modalEl.addEventListener("hidden.bs.modal", () => {
+    document.getElementById("modal-product-name").textContent = "";
+    document.getElementById("modal-product-description").textContent = "";
+    document.getElementById("modal-product-price").textContent = "";
+    document.getElementById("modal-product-condition").textContent = "";
+    document.getElementById("modal-product-image").src = "";
+    document.getElementById("modal-product-stock").innerHTML = "";
 
-        // نحدث المودال
-        document.getElementById("modal-product-name").textContent = name;
-        document.getElementById("modal-product-description").textContent = description;
-        document.getElementById("modal-product-price").textContent = price;
-        document.getElementById("modal-product-condition").textContent = condition;
-        document.getElementById("modal-product-image").src = image;
-
-        const stockSpan = document.getElementById("modal-product-stock");
-        if (parseInt(stock) > 0) {
-          stockSpan.innerHTML = '<span class="badge bg-success">In Stock</span>';
-        } else {
-          stockSpan.innerHTML = '<span class="badge bg-danger">Out of Stock</span>';
-        }
-
-        // نعرض المودال
-        modal.show();
-      });
-    });
+    // إزالة أي backdrop تبقى
+    document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
   });
+});

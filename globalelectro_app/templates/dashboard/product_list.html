@@ -4,14 +4,19 @@
 {% block title %}Products{% endblock %}
 
 {% block content %}
+
+<link rel="stylesheet" href="{% static 'css/product.css' %}">
 <div class="container mt-5">
+     <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary mb-3">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
     <h2 class="mb-4">Products</h2>
+    <button id="my-products-btn" class="btn btn-primary mb-3">Show My Products</button>
 
     <!-- إضافة منتج جديد -->
     <form id="product-form" enctype="multipart/form-data" class="mb-4">
         {% csrf_token %}
         <input type="hidden" id="product_id" name="product_id" value="">
-
         <div class="row g-2">
             <div class="col-md-2">
                 <input type="text" name="name" class="form-control" placeholder="Product name" required>
@@ -57,73 +62,93 @@
     </form>
 
     <!-- جدول المنتجات -->
-    <table class="table table-bordered table-striped">
-        <thead class="table-dark">
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Price</th>
-                <th>Condition</th>
-                <th>Stock</th>
-                <th>Image</th>
-                <th>Category</th>
-                <th>Featured</th>
-                <th style="width: 250px;">Actions</th>
-            </tr>
-        </thead>
-        <tbody id="product-table-body">
-            {% for product in products %}
-            <tr data-id="{{ product.product_id }}">
-                <td>{{ product.product_id }}</td>
-                <td class="product-name">{{ product.name }}</td>
-                <td class="product-desc">{{ product.description }}</td>
-                <td class="product-price">{{ product.price }}</td>
-                <td class="product-cond">{{ product.condition }}</td>
-                <td class="product-stock">{{ product.stock_quantity }}</td>
-                <td>
-                    {% if product.image %}
-                    <img src="{{ product.image.url }}" alt="{{ product.name }}" width="50">
-                    {% else %}No Image{% endif %}
-                </td>
-                <td class="product-category" data-category-id="{{ product.category.category_id }}">
-                    {{ product.category.name }}
-                </td>
-                <td class="product-featured">
-                    {% if product.is_featured %}✅{% else %}❌{% endif %}
-                </td>
-                <td>
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-sm btn-warning edit-btn">
-                            <i class="bi bi-pencil-square"></i> Edit
-                        </button>
-                        <button class="btn btn-sm btn-success save-btn d-none">
-                            <i class="bi bi-check2-square"></i> Save
-                        </button>
-                        <button class="btn btn-sm btn-secondary cancel-btn d-none">
-                            <i class="bi bi-x-square"></i> Cancel
-                        </button>
-                        <button class="btn btn-sm btn-danger delete-btn">
-                            <i class="bi bi-trash"></i> Delete
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="9" class="text-center">No products found.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Price</th>
+                    <th>Condition</th>
+                    <th>Stock</th>
+                    <th>Image</th>
+                    <th>Category</th>
+                    <th>Featured</th>
+                    <th style="width: 250px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="product-table-body">
+                {% for product in products %}
+                <tr data-id="{{ product.product_id }}">
+                    <td>{{ product.product_id }}</td>
+                    <td class="product-name">{{ product.name }}</td>
+                    <td class="product-desc">{{ product.description }}</td>
+                    <td class="product-price">{{ product.price }}</td>
+                    <td class="product-cond">{{ product.condition }}</td>
+                    <td class="product-stock">{{ product.stock_quantity }}</td>
+                    <td>
+                        {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" width="50">
+                        {% else %}No Image{% endif %}
+                    </td>
+                    <td class="product-category" data-category-id="{{ product.category.category_id }}">
+                        {{ product.category.name }}
+                    </td>
+                    <td class="product-featured">
+                        {% if product.is_featured %}✅{% else %}❌{% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            {% if product.user.user_id == request.session.user_id %}
+                            <button class="btn btn-sm btn-warning edit-btn">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </button>
+                            <button class="btn btn-sm btn-success save-btn d-none">
+                                <i class="bi bi-check2-square"></i> Save
+                            </button>
+                            <button class="btn btn-sm btn-secondary cancel-btn d-none">
+                                <i class="bi bi-x-square"></i> Cancel
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-btn">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" class="text-center">No products found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
+
 <script id="categories-data" type="application/json">
-    [
-        {% for cat in categories %}
-            {"category_id": "{{ cat.category_id }}", "name": "{{ cat.name }}"}{% if not forloop.last %},{% endif %}
-        {% endfor %}
-    ]
+[
+    {% for cat in categories %}
+        {"category_id": "{{ cat.category_id }}", "name": "{{ cat.name }}"}{% if not forloop.last %},{% endif %}
+    {% endfor %}
+]
 </script>
-<!-- تحميل سكربت AJAX -->
 <script src="{% static 'js/products_ajax.js' %}"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const myProductsBtn = document.getElementById("my-products-btn");
+
+    myProductsBtn.addEventListener("click", function() {
+        const url = new URL(window.location.href);
+        if (url.searchParams.get('filter_mine') === '1') {
+            url.searchParams.delete('filter_mine');
+        } else {
+            url.searchParams.set('filter_mine', '1');
+        }
+        window.location.href = url.toString();
+    });
+});
+</script>
+
 {% endblock %}

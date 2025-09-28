@@ -16,7 +16,13 @@ from django.utils import timezone
 from django.core.mail import send_mail
 import requests
 from decimal import Decimal, ROUND_HALF_UP
+from django.db.models import F, DecimalField, ExpressionWrapper
+from django.core.cache import cache
+from django.conf import settings
 
+from django.http import JsonResponse
+from .models import CustomerOrder
+from .emails import send_order_email
 
 
 # ===== Helpers =====
@@ -207,7 +213,11 @@ def category_delete(request, category_id):
 # ===== Product Management =====
 @admin_required
 def product_list(request):
+    user_id = request.session.get('user_id')
+    user = get_object_or_404(Users, pk=user_id)
+
     if request.method == 'POST':
+        # إضافة منتج جديد
         name = request.POST.get('name', '').strip()
         description = request.POST.get('description', '').strip()
         price = request.POST.get('price', '').strip()
@@ -220,6 +230,12 @@ def product_list(request):
         if not all([name, description, price, condition, stock_quantity, category_id]):
             return JsonResponse({"status": "error", "message": "All fields are required"})
 
+        try:
+            price = float(price)
+            stock_quantity = int(stock_quantity)
+        except ValueError:
+            return JsonResponse({"status": "error", "message": "Price and Stock must be numbers"})
+
         category = get_object_or_404(Category, pk=category_id)
 
         product = Product.objects.create(
@@ -230,7 +246,8 @@ def product_list(request):
             stock_quantity=stock_quantity,
             category=category,
             image=image if image else None,
-            is_featured=is_featured
+            is_featured=is_featured,
+            user=user
         )
 
         return JsonResponse({
@@ -247,9 +264,19 @@ def product_list(request):
             "is_featured": product.is_featured
         })
 
-    products = Product.objects.all()
+    # ===== عرض المنتجات مع فلترة اختيارية =====
+    filter_mine = request.GET.get('filter_mine')  # إذا موجود، فلترة لمنتجات الأدمن فقط
+    if filter_mine == '1':
+        products = Product.objects.filter(user=user).order_by('-created_at')
+    else:
+        products = Product.objects.all().order_by('-created_at')
+
     categories = Category.objects.all()
-    return render(request, 'dashboard/product_list.html', {'products': products, 'categories': categories})
+    return render(request, 'dashboard/product_list.html', {
+        'products': products,
+        'categories': categories,
+        'filter_mine': filter_mine
+    })
 
 @admin_required
 def product_edit(request, product_id):
@@ -314,12 +341,81 @@ def product_delete(request, product_id):
     return JsonResponse({"status": "error", "message": "Invalid request"})
 
 # ===== Orders =====
-@admin_required
 def order_list(request):
-    orders = CustomerOrder.objects.all().order_by('-created_at')
-    return render(request, 'dashboard/order_list.html', {'orders': orders})
+    # فلترة حسب البحث
+    query = request.GET.get('q', '')
+    status_filter = request.GET.get('status', '')
+    
+    orders = CustomerOrder.objects.all()
+    
+    if query:
+        orders = orders.filter(
+            Q(order_id__icontains=query) |
+            Q(user__first_name__icontains=query) |
+            Q(user__last_name__icontains=query)
+        )
+    if status_filter:
+        orders = orders.filter(status=status_filter)
+        
+    orders = orders.order_by('-created_at')
+    
+    return render(request, 'dashboard/order_list.html', {
+        'orders': orders,
+        'query': query,
+        'status_filter': status_filter
+    })
+
+def update_order_status(request, order_id):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        new_status = data.get('status')
+        try:
+            order = CustomerOrder.objects.get(order_id=order_id)
+            order.status = new_status
+            order.save()
+            return JsonResponse({'status': 'success'})
+        except CustomerOrder.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Order not found'})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'})
+
+def order_details(request, order_id):
+    order = get_object_or_404(CustomerOrder, order_id=order_id)
+    # بيانات الطلب + المنتجات
+    products = []
+    for item in order.order_items.all():  # افترض وجود related_name='order_items'
+        products.append({
+            'name': item.product.name,
+            'quantity': item.quantity,
+            'price': str(item.price),
+            'subtotal': str(item.quantity * item.price)
+        })
+    data = {
+        'order_id': order.order_id,
+        'user': f"{order.user.first_name} {order.user.last_name}",
+        'total_price': str(order.total_price),
+        'status': order.status,
+        'created_at': order.created_at.strftime("%Y-%m-%d %H:%M"),
+        'products': products
+    }
+    return JsonResponse({'status': 'success', 'order': data})
+
+def print_invoice(request, order_id):
+    order = get_object_or_404(CustomerOrder, order_id=order_id)
+    return render(request, 'dashboard/print_invoice.html', {'order': order})
+from .emails import send_order_email
+def send_order_email_view(request, order_id):
+    if request.method == "POST":
+        try:
+            order = CustomerOrder.objects.get(order_id=order_id)
+            send_order_email(order)
+            return JsonResponse({"status": "success", "message": "Email sent successfully"})
+        except CustomerOrder.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Order not found"})
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)})
+    return JsonResponse({"status": "error", "message": "Invalid request"})
 #======== cart =======
-@csrf_exempt
+
 
 
 # إضافة منتج للكارت
@@ -604,6 +700,35 @@ def checkout(request):
     })
 
 
+
+    
+def get_currency_rate(target_currency):
+    if target_currency == "EGP":
+        return Decimal("1.0")
+
+    # جرب نجيب الريت من الكاش أولاً
+    cache_key = f"rate_EGP_{target_currency}"
+    cached_rate = cache.get(cache_key)
+    if cached_rate:
+        return Decimal(cached_rate)
+
+    # لو مش موجود بالكاش، نجيب من API
+    api_key = "431031410a897a7f358a951a0e52b86a"
+    url = f"http://api.currencylayer.com/convert?access_key={api_key}&from=EGP&to={target_currency}&amount=1"
+    try:
+        response = requests.get(url, timeout=5).json()
+        if response.get("success") and "info" in response:
+            rate = Decimal(str(response["info"]["quote"]))
+            # خزنه بالكاش لمدة 6 ساعات (21600 ثانية)
+            cache.set(cache_key, rate, timeout=21600)
+            return rate
+    except Exception:
+        pass
+
+    # لو حصل خطأ أو API متوقف
+    return Decimal("1.0")
+
+
 def all_products(request):
     search_query = request.GET.get('search', '')
     sort_option = request.GET.get('sort', '')
@@ -630,17 +755,8 @@ def all_products(request):
     else:
         products = products.order_by('name')
 
-    # 🟢 تحويل العملة
-    rate = Decimal("1.0")
-    if target_currency != "EGP":
-        api_key = "4abfddad922f013d04acba09fed4200b"
-        url = f"http://api.currencylayer.com/convert?access_key={api_key}&from=EGP&to={target_currency}&amount=1"
-        try:
-            response = requests.get(url).json()
-            if response.get("success") and "info" in response:
-                rate = Decimal(str(response["info"]["quote"]))
-        except Exception:
-            rate = Decimal("1.0")
+    # 🟢 جلب الريت باستخدام الكاش
+    rate = get_currency_rate(target_currency)
 
     # أضف السعر المحول لكل منتج
     for product in products:
@@ -656,9 +772,6 @@ def all_products(request):
     }
 
     return render(request, 'products/all_product.html', context)
-
-
-
 def about(request):
     return render(request, 'about.html')
 def contact(request):
