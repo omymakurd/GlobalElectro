@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+
+    <!-- ترحيب المستخدم -->
+    <div class="mb-4 text-center">
+        <h2>Welcome, {{ user.first_name }}!</h2>
+        <p>Here is your dashboard overview</p>
+    </div>
+
+    <!-- روابط سريعة -->
+    <div class="row mb-4 text-center">
+        <div class="col-6 col-md-3 mb-3">
+            <a href="{% url 'view_cart' %}" class="btn btn-primary w-100">Cart</a>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <a href="#" class="btn btn-success w-100">My Orders</a>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <a href="#" class="btn btn-warning w-100">Wishlist</a>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <a href="#" class="btn btn-info w-100">Account Settings</a>
+        </div>
+    </div>
+
+    <!-- أحدث الطلبات -->
+    <div class="mb-5">
+        <h4>Latest Orders</h4>
+        {% if latest_orders %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Total Price</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in latest_orders %}
+                <tr>
+                    <td>{{ order.order_id }}</td>
+                    <td>${{ order.total_price }}</td>
+                    <td>{{ order.status }}</td>
+                    <td>{{ order.created_at|date:"M d, Y H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No orders yet.</p>
+        {% endif %}
+
+    </div>
+
+    <!-- توصيات شخصية -->
+    <!-- customer_dashboard.html -->
+    <div class="recommendations my-4">
+        <h3>Recommended for You</h3>
+        {% if recommended_products %}
+        <div class="row">
+            {% for product in recommended_products %}
+            <div class="col-md-3 mb-3">
+                <div class="card h-100">
+                    <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ product.name }}</h5>
+                        <p class="card-text">${{ product.price }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p>No recommendations yet. Start shopping to get personalized suggestions!</p>
+        {% endif %}
+    </div>
+
+
+</div>
+{% endblock %}

@@ -14,6 +14,8 @@ from django.db.models import F
 from django.db import transaction
 from django.utils import timezone
 from django.core.mail import send_mail
+import requests
+from decimal import Decimal, ROUND_HALF_UP
 
 
 
@@ -97,7 +99,7 @@ def login_user(request):
                 if user.role == 'admin':
                     return redirect('admin_dashboard')
                 else:
-                    return redirect('home')
+                    return redirect('customer_dashboard')
             else:
                 messages.error(request, "Incorrect password", extra_tags='login')
         else:
@@ -603,17 +605,16 @@ def checkout(request):
 
 
 def all_products(request):
-    search_query = request.GET.get('search', '')   # البحث
-    sort_option = request.GET.get('sort', '')      # الفرز
-    category_name = request.GET.get('category', '') # فلتر الكاتيجوري
+    search_query = request.GET.get('search', '')
+    sort_option = request.GET.get('sort', '')
+    category_name = request.GET.get('category', '')
+    target_currency = request.GET.get("currency", "EGP")
 
     products = Product.objects.all()
 
-    # فلتر الكاتيجوري
+    # تصفية حسب الكاتيجوري والبحث
     if category_name:
         products = products.filter(category__name=category_name)
-
-    # فلتر البحث
     if search_query:
         products = products.filter(name__icontains=search_query)
 
@@ -627,7 +628,23 @@ def all_products(request):
     elif sort_option == 'featured':
         products = products.order_by('-is_featured')
     else:
-        products = products.order_by('name')  # ترتيب افتراضي
+        products = products.order_by('name')
+
+    # 🟢 تحويل العملة
+    rate = Decimal("1.0")
+    if target_currency != "EGP":
+        api_key = "4abfddad922f013d04acba09fed4200b"
+        url = f"http://api.currencylayer.com/convert?access_key={api_key}&from=EGP&to={target_currency}&amount=1"
+        try:
+            response = requests.get(url).json()
+            if response.get("success") and "info" in response:
+                rate = Decimal(str(response["info"]["quote"]))
+        except Exception:
+            rate = Decimal("1.0")
+
+    # أضف السعر المحول لكل منتج
+    for product in products:
+        product.converted_price = round(product.price * rate, 2)
 
     context = {
         'products': products,
@@ -635,8 +652,12 @@ def all_products(request):
         'sort_option': sort_option,
         'category_name': category_name,
         'categories': Category.objects.all(),
+        'currency': target_currency,
     }
+
     return render(request, 'products/all_product.html', context)
+
+
 
 def about(request):
     return render(request, 'about.html')
@@ -663,3 +684,48 @@ def contact(request):
         return redirect('contact')  # يرجع نفس الصفحة بعد الإرسال
 
     return render(request, 'contact.html')
+
+
+def login_required_custom(view_func):
+    from functools import wraps
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.session.get("user_id"):
+            messages.error(request, "Please log in to access checkout.")
+            return redirect("login_register")
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+
+@login_required_custom
+def customer_dashboard(request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        messages.error(request, "Please log in to access dashboard.")
+        return redirect("login_register")
+
+    custom_user = get_object_or_404(Users, pk=user_id)
+
+    # آخر 5 أوردرات
+    latest_orders = CustomerOrder.objects.filter(user=custom_user).order_by('-created_at')[:5]
+
+    # منتجات المستخدم المشتراة
+    purchased_product_ids = OrderItem.objects.filter(order__user=custom_user).values_list('product_id', flat=True)
+    purchased_categories = OrderItem.objects.filter(order__user=custom_user).values_list('product__category_id', flat=True).distinct()
+
+    # توصيات المنتجات
+    recommended_products = Product.objects.filter(
+        category_id__in=purchased_categories
+    ).exclude(
+        product_id__in=purchased_product_ids
+    ).distinct()[:5]
+
+    if not recommended_products:
+        recommended_products = Product.objects.order_by('-created_at')[:5]
+
+    context = {
+        'recommended_products': recommended_products,
+        'latest_orders': latest_orders,
+    }
+    return render(request, 'dashboard/customer_dashboard.html', context)
