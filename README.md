@@ -89,16 +89,6 @@
 
 ---
 
-## 💬 User Communication
-
-- Users can submit **questions or complaints** directly to admin
-- Admin dashboard for **quick responses**
-- Direct communication enables **faster issue resolution**
-
-![Admin Dashboard](assets/admin-dashboard.png)
-
----
-
 ## 🔒 Security & Authentication
 
 - **Secure user authentication** with password hashing
