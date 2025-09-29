@@ -27,7 +27,7 @@
 ### 1️⃣ Super Admin (Django Admin)
 - Full management of users and other admins
 - Control over products, categories, and orders
-super-user.png
+
 
 ![Super Admin Dashboard](assets/super-user.png)
 
