@@ -52,10 +52,11 @@
 ## 🛒 Product & Shopping System
 
 **Product Categories:**
-- Laptops
-- Smartphones
 - Home Appliances
-- Accessories
+- Kitchen Appliances
+- Personal Electronics
+- Office Electronics
+- Entertainment & Media
 
 **Functionalities:**
 - Filter by price, category, and condition (New / Used)
