@@ -64,7 +64,7 @@
 - Real-time updates for cart and products without full page reloads
 
 ![Products](assets/products.png)
-![Manage Products](assets/manage-product.png)
+
 
 ---
 
@@ -74,7 +74,7 @@
 - Orders generated automatically upon checkout
 - Track past orders and their status in real-time
 
-![Manage Orders](assets/manage-order.png)
+
 ![Cart](assets/cart.png)
 
 ---
