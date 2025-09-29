@@ -2,7 +2,7 @@
 
 [Visit Live Site 🌟](http://54.146.200.53/)
 
-![GlobalElectro Logo](assets/Home.png)
+![GlobalElectro Logo](assets/logo.png)
 
 **Innovative E-commerce Platform for Electronics & Appliances**  
 *Tagline: High Quality – Affordable – User-Friendly*
